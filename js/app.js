@@ -674,7 +674,7 @@ class SaturdayRunClub {
             title: "Saturday Run & Coffee Club",
             description: "A mindful Saturday morning ritual combining 5km running, specialty coffee, and productive activities",
             time: "8:00 AM - 11:00 AM",
-            location: "Central Park Meeting Point",
+            location: "서울 한강공원 반포지구 (반포한강공원)",
             announcement: "",
             activities: [
                 "🏃‍♂️ 5km morning run at 8:00 AM",
