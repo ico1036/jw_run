@@ -16,12 +16,14 @@ class SaturdayRunClub {
         this.participants = [];
         this.isAdminMode = false;
         this.adminKey = 'runclub2024'; // 관리자 비밀키
+        this.eventConfig = this.getDefaultEventConfig(); // 이벤트 설정
         
         this.init();
     }
     
     init() {
         this.checkAdminMode();
+        this.loadEventConfig();
         this.loadCurrentEvent();
         this.setupEventListeners();
         this.updateNextSaturday();
@@ -67,6 +69,27 @@ class SaturdayRunClub {
         if (cancelAddBtn) {
             cancelAddBtn.addEventListener('click', () => this.hideQuickAddForm());
         }
+        
+        // Event Edit buttons
+        const editEventBtn = document.getElementById('editEventBtn');
+        if (editEventBtn) {
+            editEventBtn.addEventListener('click', () => this.showEventEditModal());
+        }
+        
+        const saveEventBtn = document.getElementById('saveEventBtn');
+        if (saveEventBtn) {
+            saveEventBtn.addEventListener('click', () => this.saveEventConfig());
+        }
+        
+        const resetEventBtn = document.getElementById('resetEventBtn');
+        if (resetEventBtn) {
+            resetEventBtn.addEventListener('click', () => this.resetEventConfig());
+        }
+        
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+        if (cancelEditBtn) {
+            cancelEditBtn.addEventListener('click', () => this.closeEventEditModal());
+        }
     }
     
     // 다음 토요일 날짜 계산
@@ -98,14 +121,49 @@ class SaturdayRunClub {
         
         const eventCard = document.getElementById('eventCard');
         if (eventCard) {
+            const announcement = this.eventConfig.announcement ? 
+                `<div class="event-announcement">📢 ${this.eventConfig.announcement}</div>` : '';
+            
             eventCard.innerHTML = `
                 <div class="event-date">${nextSaturday.toLocaleDateString('en-US', options)}</div>
-                <div class="event-time">8:00 AM - 11:00 AM</div>
+                <div class="event-time">${this.eventConfig.time}</div>
+                ${this.eventConfig.location ? `<div class="event-location">📍 ${this.eventConfig.location}</div>` : ''}
+                ${announcement}
                 <div class="event-details">
-                    <p>Join us for our weekly 5km run followed by specialty coffee and productive activities. 
-                    Meet at the usual starting point and bring your positive energy!</p>
+                    <p>${this.eventConfig.description}</p>
                 </div>
             `;
+        }
+        
+        // 히어로 섹션 업데이트
+        this.updateHeroSection();
+        
+        // 활동 목록 업데이트
+        this.updateActivitiesList();
+    }
+    
+    // 히어로 섹션 업데이트
+    updateHeroSection() {
+        const heroTitle = document.querySelector('.hero-title');
+        const heroSubtitle = document.querySelector('.hero-subtitle');
+        
+        if (heroTitle) {
+            heroTitle.textContent = this.eventConfig.title;
+        }
+        
+        if (heroSubtitle) {
+            heroSubtitle.textContent = this.eventConfig.description;
+        }
+    }
+    
+    // 활동 목록 업데이트
+    updateActivitiesList() {
+        const activityList = document.querySelector('.activity-list');
+        if (activityList && this.eventConfig.activities) {
+            activityList.innerHTML = this.eventConfig.activities
+                .filter(activity => activity.trim())
+                .map(activity => `<li>${activity}</li>`)
+                .join('');
         }
     }
     
@@ -454,11 +512,139 @@ class SaturdayRunClub {
             }, 300);
         }, 3000);
     }
+    
+    // 기본 이벤트 설정 반환
+    getDefaultEventConfig() {
+        return {
+            title: "Saturday Run & Coffee Club",
+            description: "A mindful Saturday morning ritual combining 5km running, specialty coffee, and productive activities",
+            time: "8:00 AM - 11:00 AM",
+            location: "Central Park Meeting Point",
+            announcement: "",
+            activities: [
+                "🏃‍♂️ 5km morning run at 8:00 AM",
+                "☕ Specialty coffee & light refreshments",
+                "📚 Productive activities: reading, journaling, planning",
+                "💬 Meaningful conversations & positive energy exchange"
+            ]
+        };
+    }
+    
+    // 이벤트 설정 로드
+    loadEventConfig() {
+        const stored = localStorage.getItem('saturday-run-event-config');
+        if (stored) {
+            try {
+                this.eventConfig = { ...this.getDefaultEventConfig(), ...JSON.parse(stored) };
+            } catch (error) {
+                console.error('Failed to load event config:', error);
+                this.eventConfig = this.getDefaultEventConfig();
+            }
+        }
+    }
+    
+    // 이벤트 설정 저장
+    saveEventConfigToStorage() {
+        localStorage.setItem('saturday-run-event-config', JSON.stringify(this.eventConfig));
+    }
+    
+    // 이벤트 편집 모달 표시
+    showEventEditModal() {
+        const modal = document.getElementById('eventEditModal');
+        if (modal) {
+            // 현재 설정으로 폼 채우기
+            this.populateEditForm();
+            modal.classList.add('show');
+        }
+    }
+    
+    // 이벤트 편집 모달 닫기
+    closeEventEditModal() {
+        const modal = document.getElementById('eventEditModal');
+        if (modal) {
+            modal.classList.remove('show');
+        }
+    }
+    
+    // 편집 폼에 현재 설정 채우기
+    populateEditForm() {
+        document.getElementById('eventTitle').value = this.eventConfig.title || '';
+        document.getElementById('eventDescription').value = this.eventConfig.description || '';
+        document.getElementById('eventTime').value = this.eventConfig.time || '';
+        document.getElementById('eventLocation').value = this.eventConfig.location || '';
+        document.getElementById('eventAnnouncement').value = this.eventConfig.announcement || '';
+        
+        // 활동 목록 채우기
+        for (let i = 0; i < 4; i++) {
+            const activityInput = document.getElementById(`activity${i + 1}`);
+            if (activityInput) {
+                activityInput.value = this.eventConfig.activities[i] || '';
+            }
+        }
+    }
+    
+    // 이벤트 설정 저장
+    saveEventConfig() {
+        // 폼에서 데이터 수집
+        const formData = {
+            title: document.getElementById('eventTitle').value.trim() || this.getDefaultEventConfig().title,
+            description: document.getElementById('eventDescription').value.trim() || this.getDefaultEventConfig().description,
+            time: document.getElementById('eventTime').value.trim() || this.getDefaultEventConfig().time,
+            location: document.getElementById('eventLocation').value.trim(),
+            announcement: document.getElementById('eventAnnouncement').value.trim(),
+            activities: []
+        };
+        
+        // 활동 목록 수집
+        for (let i = 1; i <= 4; i++) {
+            const activityInput = document.getElementById(`activity${i}`);
+            if (activityInput && activityInput.value.trim()) {
+                formData.activities.push(activityInput.value.trim());
+            }
+        }
+        
+        // 활동이 없으면 기본값 사용
+        if (formData.activities.length === 0) {
+            formData.activities = this.getDefaultEventConfig().activities;
+        }
+        
+        // 설정 업데이트
+        this.eventConfig = formData;
+        this.saveEventConfigToStorage();
+        
+        // UI 업데이트
+        this.updateNextSaturday();
+        
+        // 모달 닫기
+        this.closeEventEditModal();
+        
+        // 성공 알림
+        this.showNotification('이벤트 정보가 업데이트되었습니다!', 'success');
+    }
+    
+    // 이벤트 설정 초기화
+    resetEventConfig() {
+        if (confirm('이벤트 설정을 기본값으로 초기화하시겠습니까?')) {
+            this.eventConfig = this.getDefaultEventConfig();
+            this.saveEventConfigToStorage();
+            this.populateEditForm();
+            this.updateNextSaturday();
+            this.showNotification('이벤트 설정이 초기화되었습니다.', 'success');
+        }
+    }
 }
 
 // 모달 닫기 함수
 function closeModal() {
     const modal = document.getElementById('successModal');
+    if (modal) {
+        modal.classList.remove('show');
+    }
+}
+
+// 이벤트 편집 모달 닫기 함수
+function closeEventEditModal() {
+    const modal = document.getElementById('eventEditModal');
     if (modal) {
         modal.classList.remove('show');
     }

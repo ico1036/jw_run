@@ -72,6 +72,9 @@
                             <p>Manage participants for this event</p>
                         </div>
                         <div class="admin-buttons">
+                            <button class="admin-btn admin-btn-info" id="editEventBtn">
+                                📝 Edit Event
+                            </button>
                             <button class="admin-btn admin-btn-danger" id="clearAllBtn">
                                 🗑️ Clear All
                             </button>
@@ -136,6 +139,83 @@
             <h3>Welcome to the Club! 🎉</h3>
             <p>Your registration has been submitted successfully. We'll see you this Saturday at 8 AM!</p>
             <button class="modal-btn" onclick="closeModal()">Perfect</button>
+        </div>
+    </div>
+
+    <!-- Event Edit Modal -->
+    <div class="modal" id="eventEditModal">
+        <div class="modal-content event-edit-modal">
+            <div class="modal-header">
+                <h3>📝 Edit Event Details</h3>
+                <button class="modal-close" onclick="closeEventEditModal()">×</button>
+            </div>
+            
+            <div class="edit-form-container">
+                <form id="eventEditForm">
+                    <!-- Basic Info Section -->
+                    <div class="edit-section">
+                        <h4>📋 Basic Information</h4>
+                        <div class="form-group">
+                            <label for="eventTitle">Event Title</label>
+                            <input type="text" id="eventTitle" name="title" placeholder="Saturday Run & Coffee Club">
+                        </div>
+                        <div class="form-group">
+                            <label for="eventDescription">Event Description</label>
+                            <textarea id="eventDescription" name="description" rows="3" placeholder="A mindful Saturday morning ritual..."></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="eventTime">Time</label>
+                                <input type="text" id="eventTime" name="time" placeholder="8:00 AM - 11:00 AM">
+                            </div>
+                            <div class="form-group">
+                                <label for="eventLocation">Location</label>
+                                <input type="text" id="eventLocation" name="location" placeholder="Central Park Meeting Point">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Special Announcement Section -->
+                    <div class="edit-section">
+                        <h4>📢 Special Announcement (Optional)</h4>
+                        <div class="form-group">
+                            <textarea id="eventAnnouncement" name="announcement" rows="2" placeholder="Any special notes for this week's event..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Activities Section -->
+                    <div class="edit-section">
+                        <h4>🎯 Activities</h4>
+                        <div class="activities-list">
+                            <div class="form-group">
+                                <input type="text" id="activity1" name="activity1" placeholder="🏃‍♂️ 5km morning run at 8:00 AM">
+                            </div>
+                            <div class="form-group">
+                                <input type="text" id="activity2" name="activity2" placeholder="☕ Specialty coffee & light refreshments">
+                            </div>
+                            <div class="form-group">
+                                <input type="text" id="activity3" name="activity3" placeholder="📚 Productive activities: reading, journaling, planning">
+                            </div>
+                            <div class="form-group">
+                                <input type="text" id="activity4" name="activity4" placeholder="💬 Meaningful conversations & positive energy exchange">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="edit-actions">
+                        <button type="button" class="admin-btn admin-btn-success" id="saveEventBtn">
+                            💾 Save Changes
+                        </button>
+                        <button type="button" class="admin-btn admin-btn-warning" id="resetEventBtn">
+                            🔄 Reset to Default
+                        </button>
+                        <button type="button" class="admin-btn admin-btn-secondary" id="cancelEditBtn">
+                            ❌ Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
