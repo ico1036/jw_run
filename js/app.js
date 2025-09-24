@@ -129,14 +129,10 @@ class SaturdayRunClub {
         lines.forEach(line => {
             if (line.startsWith('Name:')) {
                 name = line.replace('Name:', '').trim();
-            } else if (line.startsWith('Contact:')) {
-                contact = line.replace('Contact:', '').trim();
-            } else if (line.startsWith('Message:')) {
-                message = line.replace('Message:', '').trim();
             }
         });
         
-        return { name, contact, message, timestamp: comment.created_at };
+        return { name, timestamp: comment.created_at };
     }
     
     // 참여자 목록 UI 업데이트
@@ -155,7 +151,6 @@ class SaturdayRunClub {
                 const participantItems = this.participants.map(participant => 
                     `<div class="participant-item">
                         <strong>${this.escapeHtml(participant.name)}</strong>
-                        ${participant.message ? `<br><em>${this.escapeHtml(participant.message)}</em>` : ''}
                     </div>`
                 ).join('');
                 
@@ -170,14 +165,12 @@ class SaturdayRunClub {
         
         const formData = new FormData(event.target);
         const participantData = {
-            name: formData.get('name'),
-            contact: formData.get('contact'),
-            message: formData.get('message') || ''
+            name: formData.get('name')
         };
         
         // 폼 검증
-        if (!participantData.name || !participantData.contact) {
-            alert('Please fill in your name and contact information.');
+        if (!participantData.name) {
+            alert('Please enter your name.');
             return;
         }
         
@@ -216,8 +209,6 @@ class SaturdayRunClub {
         }
         
         const commentBody = `Name: ${participantData.name}
-Contact: ${participantData.contact}
-Message: ${participantData.message}
 
 ---
 *Registered via Saturday Run & Coffee Club website*`;
