@@ -22,12 +22,36 @@ class SaturdayRunClub {
     }
     
     async init() {
+        // 브라우저 캐시 강제 지우기
+        this.clearBrowserCache();
+        
         this.checkAdminMode();
         await this.loadEventConfig(); // 이벤트 설정 먼저 로드
         this.loadCurrentEvent();
         this.setupEventListeners();
         this.updateNextSaturday();
         this.loadParticipantsFromAPI(); // API 우선, 실패시 로컬로 폴백
+    }
+    
+    // 브라우저 캐시 강제 지우기
+    clearBrowserCache() {
+        try {
+            // localStorage 완전 삭제
+            if (typeof Storage !== "undefined") {
+                localStorage.clear();
+                console.log('🧹 localStorage 캐시 완전 삭제됨');
+            }
+            
+            // sessionStorage도 삭제
+            if (typeof sessionStorage !== "undefined") {
+                sessionStorage.clear();
+                console.log('🧹 sessionStorage 캐시 완전 삭제됨');
+            }
+            
+            console.log('✅ 브라우저 캐시 정리 완료 - 서버에서 최신 데이터 로드');
+        } catch (error) {
+            console.log('⚠️ 캐시 정리 중 오류:', error.message);
+        }
     }
     
     setupEventListeners() {
@@ -389,8 +413,8 @@ class SaturdayRunClub {
             this.updateParticipantsDisplay();
             
             // 로컬 스토리지에 저장
-            localStorage.setItem('saturday-run-participants', JSON.stringify(this.participants));
-            console.log('Participants saved to localStorage:', this.participants.length);
+            // localStorage 사용 안 함.setItem('saturday-run-participants', JSON.stringify(this.participants));
+            console.log('Participants saved to // localStorage 사용 안 함:', this.participants.length);
             
         } catch (error) {
             console.error('Error adding participant locally:', error);
@@ -423,7 +447,7 @@ class SaturdayRunClub {
     
     // 로컬 스토리지에서 참여자 로드 (폴백용)
     loadParticipantsFromLocal() {
-        const stored = localStorage.getItem('saturday-run-participants');
+        const stored = // localStorage 사용 안 함.getItem('saturday-run-participants');
         if (stored) {
             this.participants = JSON.parse(stored);
             this.updateParticipantsDisplay();
@@ -501,7 +525,7 @@ class SaturdayRunClub {
                 console.error('API 삭제 실패, 로컬 모드로 전환:', error);
                 // API 실패시 로컬에서만 삭제
                 this.participants = [];
-                localStorage.removeItem('saturday-run-participants');
+                // localStorage 사용 안 함.removeItem('saturday-run-participants');
                 this.updateParticipantsDisplay();
                 this.showNotification('로컬 참가자가 삭제되었습니다.', 'warning');
             }
@@ -510,16 +534,16 @@ class SaturdayRunClub {
     
     // SuperClaude 데이터 복구 시스템
     async restoreFromLocalStorage() {
-        const stored = localStorage.getItem('saturday-run-participants');
+        const stored = // localStorage 사용 안 함.getItem('saturday-run-participants');
         if (!stored) {
-            this.showNotification('localStorage에 백업 데이터가 없습니다.', 'warning');
+            this.showNotification('// localStorage 사용 안 함에 백업 데이터가 없습니다.', 'warning');
             return;
         }
         
         try {
             const localParticipants = JSON.parse(stored);
             if (localParticipants.length === 0) {
-                this.showNotification('localStorage 백업이 비어있습니다.', 'warning');
+                this.showNotification('// localStorage 사용 안 함 백업이 비어있습니다.', 'warning');
                 return;
             }
             
@@ -528,14 +552,14 @@ class SaturdayRunClub {
                 !p.type || (p.type !== 'system_warning' && p.type !== 'recovery_prompt')
             );
             
-            if (confirm(`localStorage에서 ${realParticipants.length}명의 참가자를 복구하시겠습니까?`)) {
+            if (confirm(`// localStorage 사용 안 함에서 ${realParticipants.length}명의 참가자를 복구하시겠습니까?`)) {
                 // API로 복구 시도
                 for (const participant of realParticipants) {
                     await this.addParticipantToAPI(participant.name);
                 }
                 
                 this.showNotification(`${realParticipants.length}명의 참가자가 복구되었습니다!`, 'success');
-                console.log('🔄 localStorage에서 데이터 복구 완료');
+                console.log('🔄 // localStorage 사용 안 함에서 데이터 복구 완료');
             }
         } catch (error) {
             console.error('복구 실패:', error);
@@ -551,7 +575,7 @@ class SaturdayRunClub {
         );
         
         if (realParticipants.length > 0) {
-            localStorage.setItem('saturday-run-participants', JSON.stringify(realParticipants));
+            // localStorage 사용 안 함.setItem('saturday-run-participants', JSON.stringify(realParticipants));
             console.log(`💾 ${realParticipants.length}명의 참가자 자동 백업됨`);
         }
     }
@@ -618,7 +642,7 @@ class SaturdayRunClub {
         };
         
         this.participants.push(participant);
-        localStorage.setItem('saturday-run-participants', JSON.stringify(this.participants));
+        // localStorage 사용 안 함.setItem('saturday-run-participants', JSON.stringify(this.participants));
         this.updateParticipantsDisplay();
         this.hideQuickAddForm();
         this.showNotification(`${name}님이 추가되었습니다.`, 'success');
@@ -630,7 +654,7 @@ class SaturdayRunClub {
             const participant = this.participants[index];
             if (confirm(`${participant.name}님을 삭제하시겠습니까?`)) {
                 this.participants.splice(index, 1);
-                localStorage.setItem('saturday-run-participants', JSON.stringify(this.participants));
+                // localStorage 사용 안 함.setItem('saturday-run-participants', JSON.stringify(this.participants));
                 this.updateParticipantsDisplay();
                 this.showNotification(`${participant.name}님이 삭제되었습니다.`, 'success');
             }
@@ -685,50 +709,36 @@ class SaturdayRunClub {
         };
     }
     
-    // 이벤트 설정 로드 (GitHub + localStorage)
+    // 이벤트 설정 로드 (GitHub API만 사용)
     async loadEventConfig() {
-        // 먼저 서버 API에서 GitHub 설정 로드 시도
+        // 서버 API에서 GitHub 설정 로드 (// localStorage 사용 안 함 사용 안 함)
         try {
             const response = await fetch('/api/event-config');
             const result = await response.json();
             
             if (result.success && result.config) {
                 this.eventConfig = { ...this.getDefaultEventConfig(), ...result.config };
-                // GitHub에서 로드한 설정을 localStorage에도 저장
-                localStorage.setItem('saturday-run-event-config', JSON.stringify(result.config));
                 console.log('📥 GitHub에서 이벤트 설정 로드됨:', result.config.title);
                 return;
             }
         } catch (error) {
-            console.log('⚠️ GitHub 이벤트 설정 로드 실패, localStorage 확인:', error.message);
+            console.log('⚠️ GitHub 이벤트 설정 로드 실패, 기본값 사용:', error.message);
         }
         
-        // GitHub 로드 실패 시 localStorage에서 로드
-        const stored = localStorage.getItem('saturday-run-event-config');
-        if (stored) {
-            try {
-                this.eventConfig = { ...this.getDefaultEventConfig(), ...JSON.parse(stored) };
-                console.log('📱 localStorage에서 이벤트 설정 로드됨');
-            } catch (error) {
-                console.error('Failed to load event config:', error);
-                this.eventConfig = this.getDefaultEventConfig();
-            }
-        } else {
-            this.eventConfig = this.getDefaultEventConfig();
-        }
+        // GitHub 로드 실패 시 기본값 사용 (// localStorage 사용 안 함 사용 안 함)
+        this.eventConfig = this.getDefaultEventConfig();
+        console.log('📝 기본 이벤트 설정 사용');
     }
     
-    // 이벤트 설정 저장 (GitHub + localStorage)
+    // 이벤트 설정 저장 (GitHub API만 사용)
     async saveEventConfigToStorage() {
-        // 로컬 저장 (즉시 반영)
-        localStorage.setItem('saturday-run-event-config', JSON.stringify(this.eventConfig));
-        
-        // 서버 API를 통해 GitHub에 백업 (비동기)
+        // GitHub API로만 저장 (// localStorage 사용 안 함 사용 안 함)
         try {
             await this.saveEventConfigToAPI();
-            console.log('✅ 이벤트 설정 GitHub 백업 완료');
+            console.log('✅ 이벤트 설정 GitHub 저장 완료');
         } catch (error) {
-            console.log('⚠️ GitHub 백업 실패 (로컬 저장은 성공):', error.message);
+            console.log('⚠️ GitHub 저장 실패:', error.message);
+            throw error; // 에러를 다시 던져서 호출자가 처리할 수 있도록
         }
     }
     
