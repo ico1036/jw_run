@@ -1,0 +1,16 @@
+{
+  "preferred_personas": ["architect", "backend", "frontend", "analyzer"],
+  "auto_cleanup": true,
+  "token_optimization": "aggressive",
+  "mcp_servers": ["Context7", "Sequential", "Magic", "Playwright"],
+  "workflow_patterns": {
+    "development": ["/sc:design", "/sc:implement", "/sc:test"],
+    "debugging": ["/sc:troubleshoot", "/sc:analyze", "/sc:explain", "/sc:implement", "/sc:test"],
+    "refactoring": ["/sc:analyze", "/sc:cleanup", "/sc:document"],
+    "feature_development": ["/sc:design", "/sc:estimate", "/sc:implement", "/sc:build", "/sc:test", "/sc:analyze"]
+  },
+  "quality_checklist": {
+    "pre_commit": ["/sc:test", "/sc:cleanup", "/sc:document", "/sc:analyze"],
+    "code_review": ["/sc:security", "/sc:analyze", "/sc:explain"]
+  }
+}
