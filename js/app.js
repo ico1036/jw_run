@@ -698,10 +698,45 @@ class SaturdayRunClub {
         }
     }
     
-    // 이벤트 설정 저장
-    saveEventConfigToStorage() {
+    // 이벤트 설정 저장 (GitHub + localStorage)
+    async saveEventConfigToStorage() {
+        // 로컬 저장 (즉시 반영)
         localStorage.setItem('saturday-run-event-config', JSON.stringify(this.eventConfig));
+        
+        // 서버 API를 통해 GitHub에 백업 (비동기)
+        try {
+            await this.saveEventConfigToAPI();
+            console.log('✅ 이벤트 설정 GitHub 백업 완료');
+        } catch (error) {
+            console.log('⚠️ GitHub 백업 실패 (로컬 저장은 성공):', error.message);
+        }
     }
+    
+    // 서버 API를 통해 이벤트 설정 저장
+    async saveEventConfigToAPI() {
+        try {
+            const response = await fetch('/api/event-config', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    admin_key: this.adminKey,
+                    config: this.eventConfig
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to save event config');
+            }
+            
+        } catch (error) {
+            throw new Error(`API 저장 실패: ${error.message}`);
+        }
+    }
+    
     
     // 이벤트 편집 모달 표시
     showEventEditModal() {

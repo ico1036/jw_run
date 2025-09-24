@@ -150,3 +150,5 @@ localStorage.removeItem('saturday-run-participants');
 **관리자 URL**: `?admin=runclub2024`
 
 *주인님의 Saturday Run & Coffee Club 관리를 위한 완벽한 도구입니다! 🏃‍♂️☕*
+
+

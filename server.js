@@ -296,6 +296,115 @@ app.delete('/api/participants', async (req, res) => {
     }
 });
 
+// 이벤트 설정 저장 API
+app.post('/api/event-config', async (req, res) => {
+    try {
+        const { admin_key, config } = req.body;
+        
+        if (admin_key !== 'runclub2024') {
+            return res.status(403).json({
+                success: false,
+                error: 'Unauthorized'
+            });
+        }
+        
+        if (!config) {
+            return res.status(400).json({
+                success: false,
+                error: 'Event config is required'
+            });
+        }
+        
+        // GitHub에 이벤트 설정 저장
+        try {
+            await saveEventConfigToGitHub(config);
+            console.log('📝 이벤트 설정 GitHub 저장 완료');
+            
+            res.json({
+                success: true,
+                message: 'Event config saved successfully'
+            });
+        } catch (error) {
+            console.error('이벤트 설정 저장 실패:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Failed to save event config'
+            });
+        }
+        
+    } catch (error) {
+        console.error('이벤트 설정 API 에러:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to process event config'
+        });
+    }
+});
+
+// GitHub에 이벤트 설정 저장
+async function saveEventConfigToGitHub(config) {
+    const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+    const GITHUB_OWNER = 'ico1036';
+    const GITHUB_REPO = 'jw_run';
+    
+    if (!GITHUB_TOKEN) {
+        console.log('💡 GITHUB_TOKEN 환경변수가 없어 이벤트 설정 GitHub 백업 건너뜀');
+        return;
+    }
+    
+    try {
+        const content = JSON.stringify(config, null, 2);
+        const encodedContent = Buffer.from(content).toString('base64');
+        
+        // 기존 파일 SHA 가져오기
+        let sha = null;
+        try {
+            const getResponse = await fetch(
+                `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/saturday-run-coffee-club/event-config.json`,
+                {
+                    headers: {
+                        'Authorization': `token ${GITHUB_TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                }
+            );
+            if (getResponse.ok) {
+                const fileData = await getResponse.json();
+                sha = fileData.sha;
+            }
+        } catch (e) {
+            // 파일이 없으면 새로 생성
+        }
+        
+        // GitHub에 파일 업데이트/생성
+        const updateResponse = await fetch(
+            `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/saturday-run-coffee-club/event-config.json`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${GITHUB_TOKEN}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `📝 이벤트 설정 업데이트: ${config.title} (${new Date().toISOString()})`,
+                    content: encodedContent,
+                    ...(sha && { sha })
+                })
+            }
+        );
+        
+        if (updateResponse.ok) {
+            console.log(`📝 이벤트 설정 GitHub 백업 성공: ${config.title}`);
+        } else {
+            throw new Error(`GitHub API 오류: ${updateResponse.status}`);
+        }
+        
+    } catch (error) {
+        throw new Error(`이벤트 설정 GitHub 백업 실패: ${error.message}`);
+    }
+}
+
 // 서버 시작
 async function startServer() {
     await initializeData();
@@ -307,6 +416,7 @@ async function startServer() {
         console.log(`   GET  /api/participants - 참가자 목록 조회`);
         console.log(`   POST /api/participants - 참가자 등록`);
         console.log(`   DELETE /api/participants - 모든 참가자 삭제 (관리자)`);
+        console.log(`   POST /api/event-config - 이벤트 설정 저장 (관리자)`);
         console.log('🎉 준비 완료!');
     });
 }
