@@ -1,0 +1,127 @@
+name: SuperClaude + Playwright E2E Tests
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    # 매일 오전 9시에 자동 실행
+    - cron: '0 9 * * *'
+
+jobs:
+  superclaude-tests:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: [3.11]
+    
+    steps:
+    - name: 🛎️ Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: ⚡ Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        version: "latest"
+    
+    - name: 📦 Install Dependencies
+      run: |
+        uv sync
+        uv run playwright install --with-deps
+    
+    - name: 🚀 Start Local Server
+      run: |
+        cd saturday-run-coffee-club
+        python3 -m http.server 8000 &
+        sleep 5
+        curl -f http://localhost:8000 || exit 1
+      
+    - name: 🧪 Run SuperClaude Tests
+      run: |
+        uv run python tests/run_tests.py
+      
+    - name: 📊 Upload Test Reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: superclaude-test-reports
+        path: tests/reports/
+        retention-days: 30
+    
+    - name: 📝 Comment Test Results on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          
+          // 최신 리포트 파일 찾기
+          const reportsDir = 'tests/reports';
+          const files = fs.readdirSync(reportsDir);
+          const reportFiles = files.filter(f => f.startsWith('superclaude_test_report_'));
+          
+          if (reportFiles.length > 0) {
+            const latestReport = reportFiles.sort().pop();
+            const reportContent = fs.readFileSync(path.join(reportsDir, latestReport), 'utf8');
+            
+            // PR에 코멘트 추가
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🤖 SuperClaude 자동 테스트 결과\n\n${reportContent}`
+            });
+          }
+    
+    - name: 🚨 Create Issue for Critical Failures
+      if: failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = require('path');
+          
+          // GitHub 이슈 템플릿 찾기
+          const reportsDir = 'tests/reports';
+          if (fs.existsSync(reportsDir)) {
+            const files = fs.readdirSync(reportsDir);
+            const issueFiles = files.filter(f => f.startsWith('github_issue_'));
+            
+            if (issueFiles.length > 0) {
+              const latestIssue = issueFiles.sort().pop();
+              const issueContent = fs.readFileSync(path.join(reportsDir, latestIssue), 'utf8');
+              
+              // 새 이슈 생성
+              github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🚨 SuperClaude 자동 감지: 웹사이트 이슈',
+                body: issueContent,
+                labels: ['bug', 'automated', 'superclaude']
+              });
+            }
+          }
+
+  deploy-on-success:
+    needs: superclaude-tests
+    runs-on: ubuntu-latest
+    if: success() && github.ref == 'refs/heads/master'
+    
+    steps:
+    - name: 🛎️ Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: 🚀 Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./saturday-run-coffee-club
+        cname: # 커스텀 도메인이 있다면 여기에 추가
