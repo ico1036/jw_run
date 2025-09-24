@@ -38,6 +38,13 @@ async function initializeData() {
             console.log('⚠️ GitHub 복구 실패:', githubError.message);
         }
     }
+    
+    // 이벤트 설정도 GitHub에서 복구 시도
+    try {
+        await loadEventConfigFromGitHub();
+    } catch (error) {
+        console.log('⚠️ 이벤트 설정 복구 실패:', error.message);
+    }
 }
 
 // 참가자 데이터 읽기
@@ -296,6 +303,33 @@ app.delete('/api/participants', async (req, res) => {
     }
 });
 
+// 이벤트 설정 조회 API
+app.get('/api/event-config', async (req, res) => {
+    try {
+        const eventConfig = await loadEventConfigFromGitHub();
+        
+        if (eventConfig) {
+            res.json({
+                success: true,
+                config: eventConfig
+            });
+        } else {
+            res.json({
+                success: true,
+                config: null,
+                message: 'No event config found'
+            });
+        }
+        
+    } catch (error) {
+        console.error('이벤트 설정 조회 에러:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to load event config'
+        });
+    }
+});
+
 // 이벤트 설정 저장 API
 app.post('/api/event-config', async (req, res) => {
     try {
@@ -340,6 +374,47 @@ app.post('/api/event-config', async (req, res) => {
         });
     }
 });
+
+// GitHub에서 이벤트 설정 로드
+async function loadEventConfigFromGitHub() {
+    const GITHUB_OWNER = 'ico1036';
+    const GITHUB_REPO = 'jw_run';
+    
+    try {
+        const response = await fetch(
+            `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/saturday-run-coffee-club/event-config.json`,
+            {
+                headers: {
+                    'Accept': 'application/vnd.github.v3+json',
+                    'User-Agent': 'Saturday-Run-Club'
+                }
+            }
+        );
+        
+        if (!response.ok) {
+            if (response.status === 404) {
+                console.log('📄 GitHub에 event-config.json 파일 없음');
+                return null;
+            }
+            throw new Error(`GitHub API 오류: ${response.status}`);
+        }
+        
+        const fileData = await response.json();
+        const content = Buffer.from(fileData.content, 'base64').toString('utf8');
+        const eventConfig = JSON.parse(content);
+        
+        console.log(`📥 GitHub에서 이벤트 설정 로드됨: ${eventConfig.title}`);
+        
+        // 클라이언트에서 접근할 수 있도록 파일로 저장 (선택사항)
+        // 또는 메모리에 저장해서 API로 제공
+        
+        return eventConfig;
+        
+    } catch (error) {
+        console.error('GitHub 이벤트 설정 로드 실패:', error.message);
+        return null;
+    }
+}
 
 // GitHub에 이벤트 설정 저장
 async function saveEventConfigToGitHub(config) {
@@ -416,6 +491,7 @@ async function startServer() {
         console.log(`   GET  /api/participants - 참가자 목록 조회`);
         console.log(`   POST /api/participants - 참가자 등록`);
         console.log(`   DELETE /api/participants - 모든 참가자 삭제 (관리자)`);
+        console.log(`   GET  /api/event-config - 이벤트 설정 조회`);
         console.log(`   POST /api/event-config - 이벤트 설정 저장 (관리자)`);
         console.log('🎉 준비 완료!');
     });

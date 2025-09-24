@@ -21,9 +21,9 @@ class SaturdayRunClub {
         this.init();
     }
     
-    init() {
+    async init() {
         this.checkAdminMode();
-        this.loadEventConfig();
+        await this.loadEventConfig(); // 이벤트 설정 먼저 로드
         this.loadCurrentEvent();
         this.setupEventListeners();
         this.updateNextSaturday();
@@ -685,16 +685,36 @@ class SaturdayRunClub {
         };
     }
     
-    // 이벤트 설정 로드
-    loadEventConfig() {
+    // 이벤트 설정 로드 (GitHub + localStorage)
+    async loadEventConfig() {
+        // 먼저 서버 API에서 GitHub 설정 로드 시도
+        try {
+            const response = await fetch('/api/event-config');
+            const result = await response.json();
+            
+            if (result.success && result.config) {
+                this.eventConfig = { ...this.getDefaultEventConfig(), ...result.config };
+                // GitHub에서 로드한 설정을 localStorage에도 저장
+                localStorage.setItem('saturday-run-event-config', JSON.stringify(result.config));
+                console.log('📥 GitHub에서 이벤트 설정 로드됨:', result.config.title);
+                return;
+            }
+        } catch (error) {
+            console.log('⚠️ GitHub 이벤트 설정 로드 실패, localStorage 확인:', error.message);
+        }
+        
+        // GitHub 로드 실패 시 localStorage에서 로드
         const stored = localStorage.getItem('saturday-run-event-config');
         if (stored) {
             try {
                 this.eventConfig = { ...this.getDefaultEventConfig(), ...JSON.parse(stored) };
+                console.log('📱 localStorage에서 이벤트 설정 로드됨');
             } catch (error) {
                 console.error('Failed to load event config:', error);
                 this.eventConfig = this.getDefaultEventConfig();
             }
+        } else {
+            this.eventConfig = this.getDefaultEventConfig();
         }
     }
     
