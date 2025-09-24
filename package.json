@@ -1,0 +1,20 @@
+{
+  "name": "saturday-run-coffee-club",
+  "version": "1.0.0",
+  "description": "A mindful Saturday morning ritual combining 5km running, specialty coffee, and productive activities",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["running", "coffee", "community", "saturday"],
+  "author": "Saturday Run & Coffee Club",
+  "license": "MIT"
+}

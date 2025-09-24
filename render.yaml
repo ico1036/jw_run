@@ -1,0 +1,14 @@
+# Render 배포 설정 - SuperClaude 최적화
+services:
+  - type: web
+    name: saturday-run-coffee-club
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/participants
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+

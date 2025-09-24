@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "public": true,
+  "github": {
+    "silent": true
+  },
+  "builds": [
+    {
+      "src": "saturday-run-coffee-club/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/saturday-run-coffee-club/$1"
+    }
+  ]
+}
+
+
