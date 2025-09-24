@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saturday Run & Coffee Club</title>
+    <meta name="description" content="A mindful Saturday morning ritual combining 5km running, specialty coffee, and productive activities. Join us at 8 AM for an energizing start to your weekend.">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="hero">
+        <div class="container">
+            <h1 class="hero-title">Saturday Run & Coffee Club</h1>
+            <p class="hero-subtitle">A mindful Saturday morning ritual combining 5km running, specialty coffee, and productive activities</p>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <!-- Next Event Section -->
+            <section class="next-event" id="nextEvent">
+                <h2>Next Gathering</h2>
+                <div class="event-card" id="eventCard">
+                    <div class="event-loading">
+                        <p>Loading next event...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Join Section -->
+            <section class="join-section" id="joinSection">
+                <h2>Join Us</h2>
+                <div class="join-card">
+                    <div class="join-info">
+                        <h3>What to Expect</h3>
+                        <ul class="activity-list">
+                            <li>🏃‍♂️ 5km morning run at 8:00 AM</li>
+                            <li>☕ Specialty coffee & light refreshments</li>
+                            <li>📚 Productive activities: reading, journaling, planning</li>
+                            <li>💬 Meaningful conversations & positive energy exchange</li>
+                        </ul>
+                    </div>
+                    
+                    <form class="join-form" id="joinForm">
+                        <h3>Register for Next Event</h3>
+                        <div class="form-group">
+                            <label for="participantName">Your Name</label>
+                            <input type="text" id="participantName" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="participantContact">Contact (Email or Phone)</label>
+                            <input type="text" id="participantContact" name="contact" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="participantMessage">Message (Optional)</label>
+                            <textarea id="participantMessage" name="message" rows="3" placeholder="Any dietary restrictions, questions, or just say hello!"></textarea>
+                        </div>
+                        <button type="submit" class="join-btn" id="joinBtn">
+                            <span>Join This Saturday</span>
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Participants Section -->
+            <section class="participants-section" id="participantsSection">
+                <h2>Who's Coming</h2>
+                <div class="participants-card">
+                    <div class="participants-count">
+                        <span class="count-number" id="participantCount">0</span>
+                        <span class="count-label">Participants</span>
+                    </div>
+                    <div class="participants-list" id="participantsList">
+                        <p class="no-participants">No participants yet. Be the first to join!</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- About Section -->
+            <section class="about-section">
+                <h2>About Our Club</h2>
+                <div class="about-content">
+                    <p>Every Saturday at 8 AM, we gather for a transformative morning experience that combines physical wellness, mindful consumption, and intellectual growth. Our community values authenticity, personal development, and the power of shared positive energy.</p>
+                    
+                    <div class="values-grid">
+                        <div class="value-item">
+                            <h4>Wellness First</h4>
+                            <p>Physical activity as a foundation for mental clarity and emotional balance.</p>
+                        </div>
+                        <div class="value-item">
+                            <h4>Mindful Connection</h4>
+                            <p>Quality conversations that inspire growth and meaningful relationships.</p>
+                        </div>
+                        <div class="value-item">
+                            <h4>Productive Energy</h4>
+                            <p>Channeling morning vitality into creative and purposeful activities.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Saturday Run & Coffee Club. Crafted with intention.</p>
+        </div>
+    </footer>
+
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <h3>Welcome to the Club! 🎉</h3>
+            <p>Your registration has been submitted successfully. We'll see you this Saturday at 8 AM!</p>
+            <button class="modal-btn" onclick="closeModal()">Perfect</button>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
