@@ -27,7 +27,7 @@ class SaturdayRunClub {
         this.loadCurrentEvent();
         this.setupEventListeners();
         this.updateNextSaturday();
-        this.loadParticipantsFromLocal();
+        this.loadParticipantsFromAPI(); // API 우선, 실패시 로컬로 폴백
     }
     
     setupEventListeners() {
@@ -297,12 +297,38 @@ class SaturdayRunClub {
         }
     }
     
-    // GitHub API를 통한 참여 신청 제출
+    // API를 통한 참여 신청 제출 (Render 배포용)
     async submitParticipation(participantData) {
-        // 안전한 로컬 저장 모드 - GitHub API 비활성화
-        console.log('Using local storage mode for participant registration');
-        this.addParticipantLocally(participantData);
-        return;
+        try {
+            console.log('Using API mode for participant registration');
+            
+            const response = await fetch('/api/participants', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: participantData.name
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                // API에서 받은 참가자 목록으로 업데이트
+                this.participants = result.participants || [];
+                this.updateParticipantsDisplay();
+                console.log(`✅ API 등록 성공: ${result.count}명의 참가자`);
+                return;
+            } else {
+                throw new Error(result.error || 'API registration failed');
+            }
+        } catch (error) {
+            console.error('API 등록 실패, 로컬 모드로 전환:', error);
+            // API 실패시 로컬 저장으로 폴백
+            this.addParticipantLocally(participantData);
+            return;
+        }
         
         // GitHub API 코드는 주석 처리 (필요시 활성화)
         /*
@@ -363,12 +389,36 @@ class SaturdayRunClub {
         }
     }
     
-    // 로컬 스토리지에서 참여자 로드
+    // API에서 참여자 로드 (Render 배포용)
+    async loadParticipantsFromAPI() {
+        try {
+            console.log('Loading participants from API...');
+            
+            const response = await fetch('/api/participants');
+            const result = await response.json();
+            
+            if (result.success) {
+                this.participants = result.participants || [];
+                this.updateParticipantsDisplay();
+                console.log(`📊 API에서 ${result.count}명의 참가자 로드됨`);
+                return;
+            } else {
+                throw new Error(result.error || 'Failed to load participants');
+            }
+        } catch (error) {
+            console.error('API 로드 실패, 로컬 모드로 전환:', error);
+            // API 실패시 로컬 저장에서 로드
+            this.loadParticipantsFromLocal();
+        }
+    }
+    
+    // 로컬 스토리지에서 참여자 로드 (폴백용)
     loadParticipantsFromLocal() {
         const stored = localStorage.getItem('saturday-run-participants');
         if (stored) {
             this.participants = JSON.parse(stored);
             this.updateParticipantsDisplay();
+            console.log('📊 로컬 저장소에서 참가자 로드됨');
         }
     }
     
@@ -414,13 +464,38 @@ class SaturdayRunClub {
         }
     }
     
-    // 모든 참가자 삭제
-    clearAllParticipants() {
+    // 모든 참가자 삭제 (API 연동)
+    async clearAllParticipants() {
         if (confirm('정말로 모든 참가자를 삭제하시겠습니까?')) {
-            this.participants = [];
-            localStorage.removeItem('saturday-run-participants');
-            this.updateParticipantsDisplay();
-            this.showNotification('모든 참가자가 삭제되었습니다.', 'success');
+            try {
+                const response = await fetch('/api/participants', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        admin_key: this.adminKey
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    this.participants = [];
+                    this.updateParticipantsDisplay();
+                    this.showNotification('모든 참가자가 삭제되었습니다.', 'success');
+                    console.log('🗑️ API를 통해 모든 참가자 삭제됨');
+                } else {
+                    throw new Error(result.error || 'Failed to clear participants');
+                }
+            } catch (error) {
+                console.error('API 삭제 실패, 로컬 모드로 전환:', error);
+                // API 실패시 로컬에서만 삭제
+                this.participants = [];
+                localStorage.removeItem('saturday-run-participants');
+                this.updateParticipantsDisplay();
+                this.showNotification('로컬 참가자가 삭제되었습니다.', 'warning');
+            }
         }
     }
     
