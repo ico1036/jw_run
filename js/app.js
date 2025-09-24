@@ -7,7 +7,7 @@ class SaturdayRunClub {
     constructor() {
         // GitHub Configuration (주인장이 설정해야 할 부분)
         this.config = {
-            owner: 'ico1036', // 주인장의 GitHub 사용자명
+            owner: 'YOUR_GITHUB_USERNAME', // GitHub API 비활성화 (로컬 모드)
             repo: 'jw_run', // Repository 이름
             apiUrl: 'https://api.github.com'
         };
@@ -299,12 +299,13 @@ class SaturdayRunClub {
     
     // GitHub API를 통한 참여 신청 제출
     async submitParticipation(participantData) {
-        // GitHub API 설정이 안 되어 있으면 로컬 저장
-        if (this.config.owner === 'YOUR_GITHUB_USERNAME') {
-            this.addParticipantLocally(participantData);
-            return;
-        }
+        // 안전한 로컬 저장 모드 - GitHub API 비활성화
+        console.log('Using local storage mode for participant registration');
+        this.addParticipantLocally(participantData);
+        return;
         
+        // GitHub API 코드는 주석 처리 (필요시 활성화)
+        /*
         const commentBody = `Name: ${participantData.name}
 
 ---
@@ -324,20 +325,42 @@ class SaturdayRunClub {
         if (!response.ok) {
             throw new Error('Failed to submit to GitHub');
         }
+        */
     }
     
     // 로컬 참여자 추가 (GitHub API 미설정 시)
     addParticipantLocally(participantData) {
-        const participant = {
-            ...participantData,
-            timestamp: new Date().toISOString()
-        };
-        
-        this.participants.push(participant);
-        this.updateParticipantsDisplay();
-        
-        // 로컬 스토리지에 저장
-        localStorage.setItem('saturday-run-participants', JSON.stringify(this.participants));
+        try {
+            console.log('Adding participant locally:', participantData);
+            
+            const participant = {
+                ...participantData,
+                timestamp: new Date().toISOString()
+            };
+            
+            // 중복 확인
+            const existingParticipant = this.participants.find(p => 
+                p.name.toLowerCase() === participant.name.toLowerCase()
+            );
+            
+            if (existingParticipant) {
+                console.log('Participant already exists, updating timestamp');
+                existingParticipant.timestamp = participant.timestamp;
+            } else {
+                this.participants.push(participant);
+                console.log('New participant added');
+            }
+            
+            this.updateParticipantsDisplay();
+            
+            // 로컬 스토리지에 저장
+            localStorage.setItem('saturday-run-participants', JSON.stringify(this.participants));
+            console.log('Participants saved to localStorage:', this.participants.length);
+            
+        } catch (error) {
+            console.error('Error adding participant locally:', error);
+            throw new Error('Failed to save participant data locally');
+        }
     }
     
     // 로컬 스토리지에서 참여자 로드
@@ -655,7 +678,17 @@ let app;
 
 // 애플리케이션 초기화
 document.addEventListener('DOMContentLoaded', () => {
-    app = new SaturdayRunClub();
+    try {
+        console.log('Initializing Saturday Run Club app...');
+        app = new SaturdayRunClub();
+        window.app = app; // 전역 접근을 위해 window에도 할당
+        console.log('App initialized successfully');
+    } catch (error) {
+        console.error('Failed to initialize app:', error);
+        // 에러 발생시에도 기본 앱 생성
+        app = new SaturdayRunClub();
+        window.app = app;
+    }
 });
 
 // 모달 외부 클릭 시 닫기
