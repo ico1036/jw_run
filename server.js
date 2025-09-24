@@ -83,7 +83,7 @@ async function loadFromGitHub() {
     
     try {
         const response = await fetch(
-            `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/saturday-run-coffee-club/participants.json`,
+            `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/participants.json`,
             {
                 headers: {
                     'Accept': 'application/vnd.github.v3+json',
@@ -132,7 +132,7 @@ async function saveToGitHub(participants) {
         let sha = null;
         try {
             const getResponse = await fetch(
-                `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/saturday-run-coffee-club/participants.json`,
+                `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/participants.json`,
                 {
                     headers: {
                         'Authorization': `token ${GITHUB_TOKEN}`,
@@ -150,7 +150,7 @@ async function saveToGitHub(participants) {
         
         // GitHub에 파일 업데이트/생성
         const updateResponse = await fetch(
-            `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/saturday-run-coffee-club/participants.json`,
+            `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/participants.json`,
             {
                 method: 'PUT',
                 headers: {
@@ -382,7 +382,7 @@ async function loadEventConfigFromGitHub() {
     
     try {
         const response = await fetch(
-            `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/saturday-run-coffee-club/event-config.json`,
+            `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/event-config.json`,
             {
                 headers: {
                     'Accept': 'application/vnd.github.v3+json',
@@ -435,7 +435,7 @@ async function saveEventConfigToGitHub(config) {
         let sha = null;
         try {
             const getResponse = await fetch(
-                `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/saturday-run-coffee-club/event-config.json`,
+                `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/event-config.json`,
                 {
                     headers: {
                         'Authorization': `token ${GITHUB_TOKEN}`,
@@ -453,7 +453,7 @@ async function saveEventConfigToGitHub(config) {
         
         // GitHub에 파일 업데이트/생성
         const updateResponse = await fetch(
-            `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/saturday-run-coffee-club/event-config.json`,
+            `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/event-config.json`,
             {
                 method: 'PUT',
                 headers: {
