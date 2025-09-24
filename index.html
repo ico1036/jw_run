@@ -64,6 +64,35 @@
                         <span class="count-number" id="participantCount">0</span>
                         <span class="count-label">Participants</span>
                     </div>
+                    
+                    <!-- Admin Controls (Hidden by default) -->
+                    <div class="admin-controls" id="adminControls" style="display: none;">
+                        <div class="admin-header">
+                            <h4>🔧 Admin Panel</h4>
+                            <p>Manage participants for this event</p>
+                        </div>
+                        <div class="admin-buttons">
+                            <button class="admin-btn admin-btn-danger" id="clearAllBtn">
+                                🗑️ Clear All
+                            </button>
+                            <button class="admin-btn admin-btn-secondary" id="exportBtn">
+                                📋 Export List
+                            </button>
+                            <button class="admin-btn admin-btn-primary" id="addParticipantBtn">
+                                ➕ Add Participant
+                            </button>
+                        </div>
+                        
+                        <!-- Quick Add Form -->
+                        <div class="quick-add-form" id="quickAddForm" style="display: none;">
+                            <input type="text" id="quickAddName" placeholder="Participant Name" />
+                            <div class="quick-add-buttons">
+                                <button class="admin-btn admin-btn-success" id="confirmAddBtn">Add</button>
+                                <button class="admin-btn admin-btn-secondary" id="cancelAddBtn">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="participants-list" id="participantsList">
                         <p class="no-participants">No participants yet. Be the first to join!</p>
                     </div>

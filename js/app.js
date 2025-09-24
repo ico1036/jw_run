@@ -7,27 +7,65 @@ class SaturdayRunClub {
     constructor() {
         // GitHub Configuration (주인장이 설정해야 할 부분)
         this.config = {
-            owner: 'YOUR_GITHUB_USERNAME', // 주인장의 GitHub 사용자명
-            repo: 'saturday-run-coffee-club', // Repository 이름
+            owner: 'ico1036', // 주인장의 GitHub 사용자명
+            repo: 'jw_run', // Repository 이름
             apiUrl: 'https://api.github.com'
         };
         
         this.currentEvent = null;
         this.participants = [];
+        this.isAdminMode = false;
+        this.adminKey = 'runclub2024'; // 관리자 비밀키
         
         this.init();
     }
     
     init() {
+        this.checkAdminMode();
         this.loadCurrentEvent();
         this.setupEventListeners();
         this.updateNextSaturday();
+        this.loadParticipantsFromLocal();
     }
     
     setupEventListeners() {
         const joinForm = document.getElementById('joinForm');
         if (joinForm) {
             joinForm.addEventListener('submit', (e) => this.handleJoinSubmission(e));
+        }
+        
+        // Admin event listeners
+        this.setupAdminEventListeners();
+    }
+    
+    setupAdminEventListeners() {
+        // Clear All button
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', () => this.clearAllParticipants());
+        }
+        
+        // Export button
+        const exportBtn = document.getElementById('exportBtn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => this.exportParticipants());
+        }
+        
+        // Add Participant button
+        const addParticipantBtn = document.getElementById('addParticipantBtn');
+        if (addParticipantBtn) {
+            addParticipantBtn.addEventListener('click', () => this.showQuickAddForm());
+        }
+        
+        // Quick Add Form buttons
+        const confirmAddBtn = document.getElementById('confirmAddBtn');
+        if (confirmAddBtn) {
+            confirmAddBtn.addEventListener('click', () => this.confirmAddParticipant());
+        }
+        
+        const cancelAddBtn = document.getElementById('cancelAddBtn');
+        if (cancelAddBtn) {
+            cancelAddBtn.addEventListener('click', () => this.hideQuickAddForm());
         }
     }
     
@@ -148,9 +186,10 @@ class SaturdayRunClub {
             if (this.participants.length === 0) {
                 listElement.innerHTML = '<p class="no-participants">No participants yet. Be the first to join!</p>';
             } else {
-                const participantItems = this.participants.map(participant => 
+                const participantItems = this.participants.map((participant, index) => 
                     `<div class="participant-item">
-                        <strong>${this.escapeHtml(participant.name)}</strong>
+                        <span class="participant-name"><strong>${this.escapeHtml(participant.name)}</strong></span>
+                        <button class="participant-delete" onclick="app.removeParticipant(${index})" title="Remove participant">×</button>
                     </div>`
                 ).join('');
                 
@@ -272,6 +311,149 @@ class SaturdayRunClub {
         div.textContent = text;
         return div.innerHTML;
     }
+    
+    // 관리자 모드 체크
+    checkAdminMode() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const adminParam = urlParams.get('admin');
+        
+        if (adminParam === this.adminKey) {
+            this.isAdminMode = true;
+            this.showAdminControls();
+            document.body.classList.add('admin-mode');
+            console.log('🔧 Admin mode activated');
+        }
+    }
+    
+    // 관리자 컨트롤 표시
+    showAdminControls() {
+        const adminControls = document.getElementById('adminControls');
+        if (adminControls) {
+            adminControls.style.display = 'block';
+        }
+    }
+    
+    // 모든 참가자 삭제
+    clearAllParticipants() {
+        if (confirm('정말로 모든 참가자를 삭제하시겠습니까?')) {
+            this.participants = [];
+            localStorage.removeItem('saturday-run-participants');
+            this.updateParticipantsDisplay();
+            this.showNotification('모든 참가자가 삭제되었습니다.', 'success');
+        }
+    }
+    
+    // 참가자 목록 내보내기
+    exportParticipants() {
+        if (this.participants.length === 0) {
+            this.showNotification('내보낼 참가자가 없습니다.', 'warning');
+            return;
+        }
+        
+        const participantNames = this.participants.map(p => p.name).join('\n');
+        const blob = new Blob([participantNames], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `saturday-run-participants-${new Date().toISOString().split('T')[0]}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        this.showNotification('참가자 목록이 다운로드되었습니다.', 'success');
+    }
+    
+    // 빠른 추가 폼 표시
+    showQuickAddForm() {
+        const quickAddForm = document.getElementById('quickAddForm');
+        if (quickAddForm) {
+            quickAddForm.style.display = 'block';
+            document.getElementById('quickAddName').focus();
+        }
+    }
+    
+    // 빠른 추가 폼 숨기기
+    hideQuickAddForm() {
+        const quickAddForm = document.getElementById('quickAddForm');
+        if (quickAddForm) {
+            quickAddForm.style.display = 'none';
+            document.getElementById('quickAddName').value = '';
+        }
+    }
+    
+    // 참가자 추가 확인
+    confirmAddParticipant() {
+        const nameInput = document.getElementById('quickAddName');
+        const name = nameInput.value.trim();
+        
+        if (!name) {
+            this.showNotification('이름을 입력해주세요.', 'warning');
+            return;
+        }
+        
+        // 중복 체크
+        if (this.participants.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+            this.showNotification('이미 등록된 참가자입니다.', 'warning');
+            return;
+        }
+        
+        const participant = {
+            name: name,
+            timestamp: new Date().toISOString()
+        };
+        
+        this.participants.push(participant);
+        localStorage.setItem('saturday-run-participants', JSON.stringify(this.participants));
+        this.updateParticipantsDisplay();
+        this.hideQuickAddForm();
+        this.showNotification(`${name}님이 추가되었습니다.`, 'success');
+    }
+    
+    // 개별 참가자 삭제
+    removeParticipant(index) {
+        if (index >= 0 && index < this.participants.length) {
+            const participant = this.participants[index];
+            if (confirm(`${participant.name}님을 삭제하시겠습니까?`)) {
+                this.participants.splice(index, 1);
+                localStorage.setItem('saturday-run-participants', JSON.stringify(this.participants));
+                this.updateParticipantsDisplay();
+                this.showNotification(`${participant.name}님이 삭제되었습니다.`, 'success');
+            }
+        }
+    }
+    
+    // 알림 표시
+    showNotification(message, type = 'info') {
+        // 간단한 알림 (alert 대신 사용)
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            background: ${type === 'success' ? '#28A745' : type === 'warning' ? '#FFC107' : '#007BFF'};
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
 }
 
 // 모달 닫기 함수
@@ -282,9 +464,12 @@ function closeModal() {
     }
 }
 
+// 전역 app 변수 (관리자 기능에서 사용)
+let app;
+
 // 애플리케이션 초기화
 document.addEventListener('DOMContentLoaded', () => {
-    new SaturdayRunClub();
+    app = new SaturdayRunClub();
 });
 
 // 모달 외부 클릭 시 닫기
