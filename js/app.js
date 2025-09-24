@@ -5,9 +5,9 @@
 
 class SaturdayRunClub {
     constructor() {
-        // GitHub Configuration (주인장이 설정해야 할 부분)
+        // GitHub Configuration (DB로 사용)
         this.config = {
-            owner: 'YOUR_GITHUB_USERNAME', // GitHub API 비활성화 (로컬 모드)
+            owner: 'ico1036', // 주인님의 GitHub 사용자명
             repo: 'jw_run', // Repository 이름
             apiUrl: 'https://api.github.com'
         };
@@ -51,6 +51,12 @@ class SaturdayRunClub {
         const exportBtn = document.getElementById('exportBtn');
         if (exportBtn) {
             exportBtn.addEventListener('click', () => this.exportParticipants());
+        }
+        
+        // SuperClaude 데이터 복구 버튼
+        const restoreDataBtn = document.getElementById('restoreDataBtn');
+        if (restoreDataBtn) {
+            restoreDataBtn.addEventListener('click', () => this.restoreFromLocalStorage());
         }
         
         // Add Participant button
@@ -235,6 +241,9 @@ class SaturdayRunClub {
     updateParticipantsDisplay() {
         const countElement = document.getElementById('participantCount');
         const listElement = document.getElementById('participantsList');
+        
+        // SuperClaude 자동 백업 (참가자 목록 업데이트 시마다)
+        this.autoBackupToLocalStorage();
         
         if (countElement) {
             countElement.textContent = this.participants.length;
@@ -496,6 +505,54 @@ class SaturdayRunClub {
                 this.updateParticipantsDisplay();
                 this.showNotification('로컬 참가자가 삭제되었습니다.', 'warning');
             }
+        }
+    }
+    
+    // SuperClaude 데이터 복구 시스템
+    async restoreFromLocalStorage() {
+        const stored = localStorage.getItem('saturday-run-participants');
+        if (!stored) {
+            this.showNotification('localStorage에 백업 데이터가 없습니다.', 'warning');
+            return;
+        }
+        
+        try {
+            const localParticipants = JSON.parse(stored);
+            if (localParticipants.length === 0) {
+                this.showNotification('localStorage 백업이 비어있습니다.', 'warning');
+                return;
+            }
+            
+            // 시스템 경고 메시지 제거
+            const realParticipants = localParticipants.filter(p => 
+                !p.type || (p.type !== 'system_warning' && p.type !== 'recovery_prompt')
+            );
+            
+            if (confirm(`localStorage에서 ${realParticipants.length}명의 참가자를 복구하시겠습니까?`)) {
+                // API로 복구 시도
+                for (const participant of realParticipants) {
+                    await this.addParticipantToAPI(participant.name);
+                }
+                
+                this.showNotification(`${realParticipants.length}명의 참가자가 복구되었습니다!`, 'success');
+                console.log('🔄 localStorage에서 데이터 복구 완료');
+            }
+        } catch (error) {
+            console.error('복구 실패:', error);
+            this.showNotification('데이터 복구 중 오류가 발생했습니다.', 'error');
+        }
+    }
+    
+    // 자동 백업 시스템
+    autoBackupToLocalStorage() {
+        // 시스템 메시지가 아닌 실제 참가자만 백업
+        const realParticipants = this.participants.filter(p => 
+            !p.type || (p.type !== 'system_warning' && p.type !== 'recovery_prompt')
+        );
+        
+        if (realParticipants.length > 0) {
+            localStorage.setItem('saturday-run-participants', JSON.stringify(realParticipants));
+            console.log(`💾 ${realParticipants.length}명의 참가자 자동 백업됨`);
         }
     }
     

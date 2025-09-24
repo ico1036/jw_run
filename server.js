@@ -17,14 +17,26 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('.'));  // 현재 디렉토리의 정적 파일 서빙
 
-// 참가자 데이터 초기화
+// 참가자 데이터 초기화 (GitHub DB 연동)
 async function initializeData() {
     try {
-        await fs.access(DATA_FILE);
+        const stats = await fs.stat(DATA_FILE);
+        console.log(`✅ 기존 데이터 파일 확인됨 (${stats.size} bytes)`);
     } catch (error) {
-        // 파일이 없으면 빈 배열로 초기화
-        await fs.writeFile(DATA_FILE, JSON.stringify([], null, 2));
-        console.log('📄 participants.json 초기화 완료');
+        console.log('📄 participants.json 파일 없음 - GitHub에서 복구 시도...');
+        
+        // GitHub에서 데이터 복구 시도
+        try {
+            const githubData = await loadFromGitHub();
+            if (githubData && githubData.length > 0) {
+                await fs.writeFile(DATA_FILE, JSON.stringify(githubData, null, 2));
+                console.log(`🔄 GitHub에서 ${githubData.length}명의 참가자 복구됨`);
+            } else {
+                console.log('📄 GitHub에도 데이터 없음 - 새로 시작');
+            }
+        } catch (githubError) {
+            console.log('⚠️ GitHub 복구 실패:', githubError.message);
+        }
     }
 }
 
@@ -39,14 +51,122 @@ async function readParticipants() {
     }
 }
 
-// 참가자 데이터 저장
+// 참가자 데이터 저장 (GitHub DB 백업 포함)
 async function saveParticipants(participants) {
     try {
+        // 로컬 파일 저장
         await fs.writeFile(DATA_FILE, JSON.stringify(participants, null, 2));
+        
+        // GitHub에 백업 (비동기로 실행, 실패해도 로컬 저장은 성공)
+        saveToGitHub(participants).catch(error => {
+            console.log('⚠️ GitHub 백업 실패 (로컬 저장은 성공):', error.message);
+        });
+        
         return true;
     } catch (error) {
         console.error('데이터 저장 에러:', error);
         return false;
+    }
+}
+
+// GitHub에서 데이터 로드
+async function loadFromGitHub() {
+    const GITHUB_OWNER = 'ico1036';
+    const GITHUB_REPO = 'jw_run';
+    
+    try {
+        const response = await fetch(
+            `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/saturday-run-coffee-club/participants.json`,
+            {
+                headers: {
+                    'Accept': 'application/vnd.github.v3+json',
+                    'User-Agent': 'Saturday-Run-Club'
+                }
+            }
+        );
+        
+        if (!response.ok) {
+            if (response.status === 404) {
+                console.log('📄 GitHub에 participants.json 파일 없음');
+                return [];
+            }
+            throw new Error(`GitHub API 오류: ${response.status}`);
+        }
+        
+        const fileData = await response.json();
+        const content = Buffer.from(fileData.content, 'base64').toString('utf8');
+        const participants = JSON.parse(content);
+        
+        console.log(`📥 GitHub에서 ${participants.length}명의 참가자 로드됨`);
+        return participants;
+        
+    } catch (error) {
+        console.error('GitHub 로드 실패:', error.message);
+        return [];
+    }
+}
+
+// GitHub에 데이터 저장
+async function saveToGitHub(participants) {
+    const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
+    const GITHUB_OWNER = 'ico1036';
+    const GITHUB_REPO = 'jw_run';
+    
+    if (!GITHUB_TOKEN) {
+        console.log('💡 GITHUB_TOKEN 환경변수가 없어 GitHub 백업 건너뜀');
+        return;
+    }
+    
+    try {
+        const content = JSON.stringify(participants, null, 2);
+        const encodedContent = Buffer.from(content).toString('base64');
+        
+        // 기존 파일 SHA 가져오기
+        let sha = null;
+        try {
+            const getResponse = await fetch(
+                `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/saturday-run-coffee-club/participants.json`,
+                {
+                    headers: {
+                        'Authorization': `token ${GITHUB_TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                }
+            );
+            if (getResponse.ok) {
+                const fileData = await getResponse.json();
+                sha = fileData.sha;
+            }
+        } catch (e) {
+            // 파일이 없으면 새로 생성
+        }
+        
+        // GitHub에 파일 업데이트/생성
+        const updateResponse = await fetch(
+            `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/saturday-run-coffee-club/participants.json`,
+            {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${GITHUB_TOKEN}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: `🔄 자동 백업: ${participants.length}명의 참가자 (${new Date().toISOString()})`,
+                    content: encodedContent,
+                    ...(sha && { sha })
+                })
+            }
+        );
+        
+        if (updateResponse.ok) {
+            console.log(`💾 GitHub 백업 성공: ${participants.length}명의 참가자`);
+        } else {
+            throw new Error(`GitHub API 오류: ${updateResponse.status}`);
+        }
+        
+    } catch (error) {
+        throw new Error(`GitHub 백업 실패: ${error.message}`);
     }
 }
 
@@ -192,3 +312,5 @@ async function startServer() {
 }
 
 startServer().catch(console.error);
+
+
